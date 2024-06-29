@@ -45,4 +45,5 @@ class CashCardJsonTest {
         assertThat(cashCard.id()).isEqualTo(99L);
         assertThat(cashCard.amount()).isEqualTo(123.45);
     }
+    
 }
