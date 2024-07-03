@@ -2,18 +2,21 @@ package com.pomogblin.cashcard;
 
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
+import net.minidev.json.JSONArray;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.annotation.DirtiesContext;
 
 import java.net.URI;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+//@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class CashCardApplicationTests {
 	@Autowired
 	TestRestTemplate restTemplate;
@@ -45,6 +48,7 @@ class CashCardApplicationTests {
 	}
 	
 	@Test
+	@DirtiesContext
 	void shouldCreateANewCashCard() {
 		CashCard newCashCard = new CashCard(null, 250.00);
 		ResponseEntity<Void> createResponse = restTemplate.postForEntity("/cashcards", newCashCard, Void.class);
@@ -60,6 +64,26 @@ class CashCardApplicationTests {
 		
 		assertThat(id).isNotNull();
 		assertThat(amount).isEqualTo(250.00);
+	}
+	
+	@Test
+	void shouldReturnAllCashCardsWhenListIsRequested() {
+		ResponseEntity<String> response = restTemplate.getForEntity("/cashcards", String.class);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		
+		DocumentContext documentContext = JsonPath.parse(response.getBody());
+		System.out.println("documentContext---------------------------");
+		System.out.println(documentContext);
+		int cashCardCount = documentContext.read("$.length()");
+		assertThat(cashCardCount).isEqualTo(3);
+		
+		JSONArray ids = documentContext.read("$..id");
+		assertThat(ids).containsExactlyInAnyOrder(99, 100, 101);
+		
+		JSONArray amounts = documentContext.read("$..amount");
+		System.out.println(amounts);
+		assertThat(amounts).containsExactlyInAnyOrder(123.45, 1.00, 150.00);
+
 	}
 
 }
