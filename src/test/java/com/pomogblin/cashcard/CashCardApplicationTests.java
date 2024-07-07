@@ -20,23 +20,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CashCardApplicationTests {
 	@Autowired
 	TestRestTemplate restTemplate;
-
-	@Test
-	void contextLoads() {
-	}
 	
 	@Test
 	void shouldReturnACashCardWhenDataIsSaved() {
 		ResponseEntity<String> response = restTemplate.getForEntity("/cashcards/99", String.class);
-		
-		System.out.println(response);
-		
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 		
 		DocumentContext documentContext = JsonPath.parse(response.getBody());
 		Number id = documentContext.read("$.id");
-		assertThat(id).isNotNull();
 		assertThat(id).isEqualTo(99);
+		
+		Double amount = documentContext.read("$.amount");
+		assertThat(amount).isEqualTo(123.45);
 	}
 	
 	@Test
@@ -50,7 +45,7 @@ class CashCardApplicationTests {
 	@Test
 	@DirtiesContext
 	void shouldCreateANewCashCard() {
-		CashCard newCashCard = new CashCard(null, 250.00);
+		CashCard newCashCard = new CashCard(null, 250.00, "sarah1");
 		ResponseEntity<Void> createResponse = restTemplate.postForEntity("/cashcards", newCashCard, Void.class);
 		assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 		
@@ -72,8 +67,6 @@ class CashCardApplicationTests {
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 		
 		DocumentContext documentContext = JsonPath.parse(response.getBody());
-		System.out.println("documentContext---------------------------");
-		System.out.println(documentContext);
 		int cashCardCount = documentContext.read("$.length()");
 		assertThat(cashCardCount).isEqualTo(3);
 		
@@ -81,7 +74,6 @@ class CashCardApplicationTests {
 		assertThat(ids).containsExactlyInAnyOrder(99, 100, 101);
 		
 		JSONArray amounts = documentContext.read("$..amount");
-		System.out.println(amounts);
 		assertThat(amounts).containsExactlyInAnyOrder(123.45, 1.00, 150.00);
 	}
 	
@@ -120,5 +112,4 @@ class CashCardApplicationTests {
 		JSONArray amounts = documentContext.read("$..amount");
 		assertThat(amounts).containsExactly(1.00, 123.45, 150.00);
 	}
-
 }
